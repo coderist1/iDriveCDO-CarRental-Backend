@@ -31,6 +31,7 @@ class VehicleRequest extends FormRequest
             'model' => [$required, 'string', 'max:100'],
             'type' => [$required, 'string', 'max:50'],
             'capacity' => [$required, 'integer', 'min:1'],
+            'daily_rate' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'year_model' => [$required, 'integer', 'digits:4'],
             'year_purchased' => [$required, 'integer', 'digits:4'],
         ];

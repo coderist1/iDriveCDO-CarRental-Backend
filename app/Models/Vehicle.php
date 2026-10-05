@@ -19,6 +19,7 @@ class Vehicle extends Model
         'model',
         'type',
         'capacity',
+        'daily_rate',
         'year_model',
         'year_purchased',
     ];
