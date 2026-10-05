@@ -31,7 +31,6 @@ class VehicleRequest extends FormRequest
             'transmission' => ['sometimes', 'nullable', 'string', 'max:20'],
             'fuel' => ['sometimes', 'nullable', 'string', 'max:20'],
             'luggage' => ['sometimes', 'integer', 'min:0', 'max:50'],
-            'daily_rate' => ['sometimes', 'numeric', 'min:0'],
             'status' => ['sometimes', Rule::in(['available', 'maintenance'])],
             'image' => ['sometimes', 'nullable', 'string', 'max:500'],
             'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
@@ -48,6 +47,7 @@ class VehicleRequest extends FormRequest
             'model' => [$required, 'string', 'max:100'],
             'type' => [$required, 'string', 'max:50'],
             'capacity' => [$required, 'integer', 'min:1'],
+            'daily_rate' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'year_model' => [$required, 'integer', 'digits:4'],
             'year_purchased' => [$required, 'integer', 'digits:4'],
         ];

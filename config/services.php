@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'brevo' => [
+        'key' => env('BREVO_API_KEY'),
+        'verification_template_id' => env('BREVO_VERIFICATION_TEMPLATE_ID'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

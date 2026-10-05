@@ -9,9 +9,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class RegisteredUserController extends Controller
 {
@@ -42,10 +44,24 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user));
+        $delivered = true;
+
+        try {
+            event(new Registered($user));
+        } catch (Throwable $e) {
+            // The account is already persisted, so a mail outage must not fail
+            // registration. The user can retry from the verification notice.
+            $delivered = false;
+
+            Log::error('Verification email could not be sent during registration.', [
+                'user_id' => $user->getKey(),
+                'exception' => $e,
+            ]);
+        }
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('verification.notice', absolute: false))
+            ->with('status', $delivered ? 'verification-link-sent' : 'verification-link-failed');
     }
 }

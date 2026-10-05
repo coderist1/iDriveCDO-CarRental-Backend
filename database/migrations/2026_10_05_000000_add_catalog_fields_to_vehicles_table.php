@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('transmission', 20)->nullable()->after('type');
             $table->string('fuel', 20)->nullable()->after('transmission');
             $table->unsignedTinyInteger('luggage')->default(2)->after('capacity');
-            $table->decimal('daily_rate', 10, 2)->default(0)->after('luggage');
             $table->string('status', 20)->default('available')->after('daily_rate');
             $table->string('image', 500)->nullable()->after('status');
             $table->text('description')->nullable()->after('image');
@@ -38,7 +37,6 @@ return new class extends Migration
                 'transmission',
                 'fuel',
                 'luggage',
-                'daily_rate',
                 'status',
                 'image',
                 'description',
