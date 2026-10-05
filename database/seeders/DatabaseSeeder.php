@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(FleetSeeder::class);
+
         $admin = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',

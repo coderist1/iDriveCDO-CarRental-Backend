@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\VehicleRequest;
 use App\Models\Vehicle;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class VehicleController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(Vehicle::latest()->paginate(15));
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 200);
+
+        return response()->json(Vehicle::latest()->paginate($perPage));
     }
 
     public function store(VehicleRequest $request): JsonResponse

@@ -20,6 +20,23 @@ class VehicleRequest extends FormRequest
         $required = $this->isMethod('POST') ? 'required' : 'sometimes';
 
         return [
+            'code' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:40',
+                Rule::unique('vehicles', 'code')->ignore($this->route('vehicle')),
+            ],
+            'name' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'transmission' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'fuel' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'luggage' => ['sometimes', 'integer', 'min:0', 'max:50'],
+            'daily_rate' => ['sometimes', 'numeric', 'min:0'],
+            'status' => ['sometimes', Rule::in(['available', 'maintenance'])],
+            'image' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'features' => ['sometimes', 'nullable', 'array'],
+            'features.*' => ['string', 'max:40'],
             'plate_number' => [
                 $required,
                 'string',

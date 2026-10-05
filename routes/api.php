@@ -35,5 +35,7 @@ Route::apiResource('vehicle-reg-details', VehicleRegDetailController::class)
 Route::apiResource('staff-info', StaffInfoController::class)
     ->parameters(['staff-info' => 'staff_info']);
 
+Route::post('customer-info/sync', [CustomerInfoController::class, 'sync']);
+
 Route::apiResource('customer-info', CustomerInfoController::class)
     ->parameters(['customer-info' => 'customer_info']);

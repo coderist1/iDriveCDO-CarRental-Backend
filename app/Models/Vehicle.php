@@ -13,15 +13,33 @@ class Vehicle extends Model
     protected $primaryKey = 'vehicle_id';
 
     protected $fillable = [
+        'code',
+        'name',
         'plate_number',
         'mileage',
         'brand',
         'model',
         'type',
+        'transmission',
+        'fuel',
         'capacity',
+        'luggage',
+        'daily_rate',
+        'status',
+        'image',
+        'description',
+        'features',
         'year_model',
         'year_purchased',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'daily_rate' => 'decimal:2',
+            'features' => 'array',
+        ];
+    }
 
     public function bookings(): HasMany
     {
