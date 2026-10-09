@@ -14,6 +14,15 @@ return [
     |
     */
 
+    /*
+     * Google Identity Services (ID-token sign-in). The client secret is not needed to verify ID
+     * tokens; it is only read if you later switch to the server-side OAuth code flow.
+     */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    ],
+
     'brevo' => [
         'key' => env('BREVO_API_KEY'),
         'verification_template_id' => env('BREVO_VERIFICATION_TEMPLATE_ID'),

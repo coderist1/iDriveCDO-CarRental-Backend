@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\FuelRecordController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\MaintenancePredictionController;
@@ -21,6 +22,9 @@ use App\Http\Controllers\Api\VehicleRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('sync', SyncController::class);
+
+Route::get('auth/google/config', [GoogleAuthController::class, 'config']);
+Route::post('auth/google', [GoogleAuthController::class, 'signIn'])->middleware('throttle:20,1');
 
 Route::post('users/sync', [UserController::class, 'sync']);
 Route::apiResource('users', UserController::class);

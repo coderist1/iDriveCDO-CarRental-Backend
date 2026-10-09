@@ -51,6 +51,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'age_confirmed_at',
         'terms_accepted_at',
         'password_changed_at',
+        'google_id',
     ];
 
     /**
@@ -62,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password_hash',
         'password_salt',
         'remember_token',
+        'google_id',
     ];
 
     /**
