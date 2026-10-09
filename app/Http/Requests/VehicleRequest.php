@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Vehicle;
+use App\Support\Patterns;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,38 +20,28 @@ class VehicleRequest extends FormRequest
     public function rules(): array
     {
         $required = $this->isMethod('POST') ? 'required' : 'sometimes';
+        $vehicle = $this->route('vehicle');
 
         return [
-            'code' => [
-                'sometimes',
-                'nullable',
-                'string',
-                'max:40',
-                Rule::unique('vehicles', 'code')->ignore($this->route('vehicle')),
-            ],
-            'name' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'transmission' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'fuel' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'luggage' => ['sometimes', 'integer', 'min:0', 'max:50'],
-            'status' => ['sometimes', Rule::in(['available', 'maintenance'])],
-            'image' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
-            'features' => ['sometimes', 'nullable', 'array'],
-            'features.*' => ['string', 'max:40'],
-            'plate_number' => [
-                $required,
-                'string',
-                'max:20',
-                Rule::unique('vehicles', 'plate_number')->ignore($this->route('vehicle')),
-            ],
+            'code' => ['sometimes', 'string', 'max:40', Rule::unique('vehicles', 'code')->ignore($vehicle, 'vehicle_id')],
+            'name' => [$required, 'string', 'max:60'],
+            'brand' => [$required, 'string', 'max:30'],
+            'model' => [$required, 'string', 'max:30'],
+            'year_model' => [$required, 'integer', 'between:1990,2100'],
+            'year_purchased' => ['sometimes', 'nullable', 'integer', 'between:1990,2100'],
+            'type' => [$required, Rule::in(Vehicle::TYPES)],
+            'transmission' => [$required, Rule::in(Vehicle::TRANSMISSIONS)],
+            'fuel' => [$required, Rule::in(Vehicle::FUELS)],
+            'capacity' => ['sometimes', 'integer', 'between:1,30'],
+            'luggage' => ['sometimes', 'integer', 'between:0,32767'],
             'mileage' => ['sometimes', 'integer', 'min:0'],
-            'brand' => [$required, 'string', 'max:100'],
-            'model' => [$required, 'string', 'max:100'],
-            'type' => [$required, 'string', 'max:50'],
-            'capacity' => [$required, 'integer', 'min:1'],
-            'daily_rate' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
-            'year_model' => [$required, 'integer', 'digits:4'],
-            'year_purchased' => [$required, 'integer', 'digits:4'],
+            'daily_rate' => [$required, 'numeric', 'min:500', 'max:99999999.99'],
+            'plate_number' => [$required, 'string', 'max:12', Patterns::PLATE_NUMBER, Rule::unique('vehicles', 'plate_number')->ignore($vehicle, 'vehicle_id')],
+            'image' => ['sometimes', 'nullable', 'string', 'max:300'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:400'],
+            'status' => ['sometimes', Rule::in(Vehicle::STATUSES)],
+            'features' => ['sometimes', 'array'],
+            'features.*' => ['string', 'max:40', 'distinct'],
         ];
     }
 }

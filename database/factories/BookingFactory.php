@@ -3,6 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Booking;
+use App\Models\Driver;
+use App\Models\Location;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,28 +19,53 @@ class BookingFactory extends Factory
      */
     public function definition(): array
     {
-        $pickupDate = fake()->dateTimeBetween('-1 month', '+1 month');
-        $returnDate = (clone $pickupDate)->modify('+'.fake()->numberBetween(1, 5).' days');
+        $start = fake()->dateTimeBetween('+1 day', '+2 months');
+        $days = fake()->numberBetween(1, 5);
 
         return [
-            'driver_details_id' => null,
+            'user_id' => User::factory()->customer(),
             'vehicle_id' => Vehicle::factory(),
-            'user_id' => User::factory(),
-
-            'pickup_time' => fake()->time('H:i:s'),
-            'pickup_date' => $pickupDate->format('Y-m-d'),
-            'return_time' => fake()->time('H:i:s'),
-            'return_date' => $returnDate->format('Y-m-d'),
-
-            'payment_method' => fake()->randomElement(['Cash', 'GCash', 'Bank Transfer']),
-            'number_of_passenger' => fake()->numberBetween(1, 7),
-            'driver_option' => 'Self Drive',
-
-            'fuel_before_rent' => fake()->randomFloat(2, 20, 100),
-            'fuel_upon_return' => fake()->randomFloat(2, 0, 100),
-
-            'date_reserve' => fake()->dateTimeBetween('-2 months', 'now')->format('Y-m-d'),
-            'booking_status' => fake()->randomElement(['Pending', 'Confirmed', 'Completed', 'Cancelled']),
+            'start_date' => $start->format('Y-m-d'),
+            'end_date' => (clone $start)->modify("+{$days} days")->format('Y-m-d'),
+            'pickup_time' => '09:00',
+            'return_time' => '09:00',
+            'pickup_location_id' => Location::factory(),
+            'dropoff_location_id' => fn (array $attributes) => $attributes['pickup_location_id'],
+            'number_of_passengers' => fake()->numberBetween(1, 4),
+            'drive_mode' => 'self',
+            'fuel_before_rent' => 'Full',
+            'subtotal' => $days * 2000,
+            'extras' => 0,
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
         ];
+    }
+
+    /**
+     * A paid booking in the given status (confirmed, ongoing, return_requested or completed).
+     */
+    public function paid(string $status = 'confirmed', string $method = 'cash'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => $status,
+            'payment_status' => 'paid',
+            'payment_method' => $method,
+        ]);
+    }
+
+    public function completed(): static
+    {
+        return $this->paid('completed')->state(fn (array $attributes) => [
+            'fuel_upon_return' => 'Full',
+            'returned_at' => now(),
+        ]);
+    }
+
+    public function chauffeur(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'drive_mode' => 'chauffeur',
+            'driver_id' => Driver::factory(),
+        ]);
     }
 }

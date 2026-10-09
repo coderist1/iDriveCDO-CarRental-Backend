@@ -10,7 +10,9 @@ test('registering queues a branded verification notification and leaves the user
     Notification::fake();
 
     $response = $this->post('/register', [
-        'name' => 'Ada Customer',
+        'first_name' => 'Ada',
+        'last_name' => 'Customer',
+        'phone' => '09171234567',
         'email' => 'ada@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -37,7 +39,7 @@ test('the verification notice shows the users email address', function () {
 test('the verification email contains a signed url and the rental branding', function () {
     config(['app.name' => 'Brilliant Gem Car Rental']);
 
-    $user = User::factory()->unverified()->create(['name' => 'Ada Customer']);
+    $user = User::factory()->unverified()->create(['first_name' => 'Ada', 'last_name' => 'Customer']);
 
     $mail = (new VerifyEmailAddress)->toMail($user);
 

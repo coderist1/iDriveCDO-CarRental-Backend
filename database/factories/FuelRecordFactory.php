@@ -18,11 +18,9 @@ class FuelRecordFactory extends Factory
     {
         return [
             'vehicle_id' => Vehicle::factory(),
-            'fuel_type' => fake()->randomElement(['Gasoline', 'Diesel', 'Premium']),
-            'quantity' => fake()->randomFloat(2, 10, 60),
-            'fuel_cost' => fake()->randomFloat(2, 500, 5000),
-            'fuel_date' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
-            'mileage' => fake()->randomFloat(2, 1000, 150000),
+            'fuel_type' => fn (array $attributes) => Vehicle::find($attributes['vehicle_id'])->fuel,
+            'notes' => fake()->optional()->sentence(4),
+            'recorded_at' => fake()->dateTimeBetween('-1 month', 'now'),
         ];
     }
 }

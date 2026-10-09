@@ -15,17 +15,31 @@ class VehicleFactory extends Factory
      */
     public function definition(): array
     {
-        $yearPurchased = fake()->numberBetween(2016, 2025);
+        $type = fake()->randomElement(Vehicle::TYPES);
+        $brand = fake()->randomElement(['Toyota', 'Honda', 'Mitsubishi', 'Ford', 'Nissan']);
+        $model = fake()->randomElement(['Vios', 'City', 'Mirage', 'Fortuner', 'Montero', 'Hiace', 'Ranger', 'Navara']);
+        $year = fake()->numberBetween(2018, 2025);
 
         return [
-            'plate_number' => strtoupper(fake()->unique()->bothify('???-####')),
-            'mileage' => fake()->numberBetween(0, 150000),
-            'brand' => fake()->randomElement(['Toyota', 'Mitsubishi', 'Honda', 'Nissan', 'Hyundai', 'Suzuki']),
-            'model' => fake()->randomElement(['Vios', 'Mirage', 'City', 'Almera', 'Accent', 'Ertiga']),
-            'type' => fake()->randomElement(['Sedan', 'SUV', 'Van', 'Hatchback', 'Pickup']),
-            'capacity' => fake()->randomElement([4, 5, 7, 8, 12]),
-            'year_model' => fake()->numberBetween(2015, $yearPurchased),
-            'year_purchased' => $yearPurchased,
+            'name' => "{$brand} {$model} {$year}",
+            'brand' => $brand,
+            'model' => $model,
+            'year_model' => $year,
+            'year_purchased' => $year,
+            'type' => $type,
+            'transmission' => fake()->randomElement(Vehicle::TRANSMISSIONS),
+            'fuel' => fake()->randomElement(Vehicle::FUELS),
+            'capacity' => match ($type) {
+                'Van' => 12,
+                'SUV' => 7,
+                default => 5,
+            },
+            'luggage' => fake()->numberBetween(1, 6),
+            'mileage' => fake()->numberBetween(1000, 120000),
+            'daily_rate' => fake()->numberBetween(15, 80) * 100,
+            'plate_number' => fake()->unique()->regexify('[A-Z]{3}-[0-9]{4}'),
+            'description' => fake()->sentence(),
+            'status' => 'available',
         ];
     }
 }

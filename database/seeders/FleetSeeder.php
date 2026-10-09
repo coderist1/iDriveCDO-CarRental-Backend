@@ -64,7 +64,7 @@ class FleetSeeder extends Seeder
         ];
 
         foreach ($fleet as $i => [$code, $name, $brand, $model, $year, $type, $transmission, $fuel, $seats, $luggage, $rate, $plate, $image, $description, $features]) {
-            Vehicle::updateOrCreate(
+            $vehicle = Vehicle::withTrashed()->updateOrCreate(
                 ['code' => $code],
                 [
                     'name' => $name,
@@ -81,11 +81,12 @@ class FleetSeeder extends Seeder
                     'status' => 'available',
                     'image' => $image,
                     'description' => $description,
-                    'features' => $features,
                     'year_model' => $year,
                     'year_purchased' => $year,
                 ]
             );
+
+            $vehicle->syncFeatures($features);
         }
     }
 }
