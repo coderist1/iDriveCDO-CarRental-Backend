@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasCode;
 use App\Notifications\VerifyEmailAddress;
+use App\Support\Phone;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -94,6 +95,21 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function name(): Attribute
     {
         return Attribute::get(fn () => trim($this->first_name.' '.$this->last_name));
+    }
+
+    /** Account mobiles are stored as +639XXXXXXXXX. Empty clears the number. */
+    protected function phone(): Attribute
+    {
+        return Attribute::make(
+            set: function ($value) {
+                if ($value === null || $value === '') {
+                    return null;
+                }
+                $canonical = Phone::canonical((string) $value);
+
+                return $canonical ?? $value;
+            }
+        );
     }
 
     /**

@@ -33,11 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
             $detail = (string) ($e->getPrevious()?->errorInfo[2] ?? '');
             preg_match('/ERROR:\s+(.+?)(?:\R|$)/', $detail, $match);
             preg_match('/constraint "([^"]+)"/', $detail, $constraint);
+            $duplicatePhone = ($constraint[1] ?? null) === 'users_phone_unique';
 
             [$status, $message] = match ((string) $e->getCode()) {
                 'P0001' => [422, $match[1] ?? 'The request was rejected by a database rule.'],
                 '23P01' => [409, 'This vehicle is already booked for some of those dates.'],
-                '23505' => [409, 'A record with the same unique value already exists.'],
+                '23505' => $duplicatePhone
+                    ? [422, 'This mobile number is already registered.']
+                    : [409, 'A record with the same unique value already exists.'],
                 '23503' => [409, 'This record is linked to other records and cannot be changed or deleted.'],
                 '23514' => [422, match ($constraint[1] ?? null) {
                     'ck_bookings_confirmed_paid' => 'A booking must be paid before it can be confirmed, started or completed.',

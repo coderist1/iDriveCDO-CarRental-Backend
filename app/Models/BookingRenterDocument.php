@@ -23,18 +23,23 @@ class BookingRenterDocument extends Model
         'license_address',
         'emergency_phone',
         'license_photo',
+        'id_photo',
         'id_type',
         'id_number',
+        'id_expiry',
     ];
 
+    /** Kept off booking lists; the desk loads them from the id-document route. */
     protected $hidden = [
         'license_photo',
+        'id_photo',
     ];
 
     protected function casts(): array
     {
         return [
             'license_expiry' => 'date:Y-m-d',
+            'id_expiry' => 'date:Y-m-d',
         ];
     }
 

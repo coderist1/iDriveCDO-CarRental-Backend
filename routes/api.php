@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\MaintenancePredictionController;
 use App\Http\Controllers\Api\MessageThreadController;
+use App\Http\Controllers\Api\PasswordResetCodeController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\ReportController;
@@ -25,8 +26,11 @@ Route::get('sync', SyncController::class);
 
 Route::get('auth/google/config', [GoogleAuthController::class, 'config']);
 Route::post('auth/google', [GoogleAuthController::class, 'signIn'])->middleware('throttle:20,1');
+Route::post('auth/password-code', [PasswordResetCodeController::class, 'send'])->middleware('throttle:5,1');
+Route::post('auth/password-code/verify', [PasswordResetCodeController::class, 'verify'])->middleware('throttle:10,1');
 
 Route::post('users/sync', [UserController::class, 'sync']);
+Route::post('users/phone-available', [UserController::class, 'phoneAvailable'])->middleware('throttle:30,1');
 Route::apiResource('users', UserController::class);
 
 Route::apiResource('vehicles', VehicleController::class);
@@ -40,6 +44,7 @@ Route::apiResource('drivers', DriverController::class);
 Route::apiResource('locations', LocationController::class);
 Route::apiResource('addons', AddonController::class);
 
+Route::get('bookings/{booking}/id-document', [BookingController::class, 'idDocument']);
 Route::apiResource('bookings', BookingController::class);
 Route::apiResource('payments', PaymentController::class);
 Route::apiResource('ratings', RatingController::class);

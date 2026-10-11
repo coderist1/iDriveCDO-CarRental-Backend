@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerSyncRequest;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,30 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+    /** Public check used while typing. Does not say which account owns the number. */
+    public function phoneAvailable(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'string', 'max:30'],
+        ]);
+        $canonical = Phone::canonical($data['phone']);
+        if ($canonical === null) {
+            return response()->json([
+                'valid' => false,
+                'taken' => false,
+                'message' => 'Use a Philippine mobile number (09XXXXXXXXX).',
+            ]);
+        }
+
+        $taken = User::query()->where('phone', $canonical)->exists();
+
+        return response()->json([
+            'valid' => true,
+            'taken' => $taken,
+            'message' => $taken ? 'This mobile number is already registered.' : null,
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $users = User::query()

@@ -67,6 +67,19 @@ class BookingController extends Controller
         return response()->json($booking->refresh()->load(self::DETAIL), 201);
     }
 
+    /** The ID images and the details printed on them, for the desk to compare. */
+    public function idDocument(Booking $booking): JsonResponse
+    {
+        $doc = $booking->renterDocument;
+        if (! $doc) {
+            return response()->json(['document' => null]);
+        }
+
+        return response()->json([
+            'document' => $doc->makeVisible(['license_photo', 'id_photo']),
+        ]);
+    }
+
     public function show(Booking $booking): JsonResponse
     {
         return response()->json($booking->load([...self::DETAIL, 'messageThread']));

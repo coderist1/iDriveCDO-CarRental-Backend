@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\Patterns;
+use App\Support\Phone;
+use Illuminate\Validation\Rule;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,12 +35,20 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $canonical = Phone::canonical($request->input('phone'));
+        if ($canonical !== null) {
+            $request->merge(['phone' => $canonical]);
+        }
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:40'],
             'last_name' => ['required', 'string', 'max:40'],
-            'phone' => ['required', 'string', Patterns::PHONE],
+            'phone' => ['required', 'string', Patterns::ACCOUNT_PHONE, Rule::unique('users', 'phone')],
             'email' => ['required', 'string', 'lowercase', 'email', Patterns::EMAIL, 'max:120', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'phone.regex' => 'Use a Philippine mobile number (09XXXXXXXXX).',
+            'phone.unique' => 'This mobile number is already registered.',
         ]);
 
         $user = User::create([

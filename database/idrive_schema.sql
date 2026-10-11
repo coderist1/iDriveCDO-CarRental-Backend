@@ -155,7 +155,8 @@ CREATE TABLE public.users (
   CONSTRAINT uq_users_email UNIQUE (email),
   CONSTRAINT ck_users_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
   CONSTRAINT ck_users_license CHECK (license_no IS NULL OR license_no ~* '^[A-Z0-9][A-Z0-9-]{5,19}$'),
-  CONSTRAINT ck_users_phone CHECK (phone ~ '^09[0-9]{9}$'),
+  CONSTRAINT ck_users_phone CHECK (phone IS NULL OR phone ~ '^\+639[0-9]{9}$'),
+  CONSTRAINT users_phone_unique UNIQUE (phone),
   CONSTRAINT ck_users_role CHECK (role IN ('customer', 'driver', 'staff', 'admin')),
   CONSTRAINT ck_users_status CHECK (status IN ('active', 'disabled'))
 );
@@ -392,8 +393,10 @@ CREATE TABLE public.booking_renter_documents (
   license_address varchar(120),
   emergency_phone varchar(15),
   license_photo   text,
+  id_photo        text,
   id_type         varchar(20),
   id_number       varchar(30),
+  id_expiry       date,
   created_at      timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT booking_renter_documents_pkey PRIMARY KEY (booking_id),
   CONSTRAINT fk_renter_docs_booking FOREIGN KEY (booking_id) REFERENCES public.bookings (booking_id) ON DELETE CASCADE,
@@ -406,7 +409,8 @@ CREATE TABLE public.booking_renter_documents (
   ),
   CONSTRAINT ck_renter_docs_license CHECK (license_no IS NULL OR license_no ~* '^[A-Z0-9][A-Z0-9-]{5,19}$'),
   CONSTRAINT ck_renter_docs_phone CHECK (emergency_phone IS NULL OR emergency_phone ~ '^09[0-9]{9}$'),
-  CONSTRAINT ck_renter_docs_photo CHECK (license_photo IS NULL OR license_photo ~* '^data:image/(jpeg|jpg|png|webp);base64,')
+  CONSTRAINT ck_renter_docs_photo CHECK (license_photo IS NULL OR license_photo ~* '^data:image/(jpeg|jpg|png|webp);base64,'),
+  CONSTRAINT ck_renter_docs_id_photo CHECK (id_photo IS NULL OR id_photo ~* '^data:image/(jpeg|jpg|png|webp);base64,')
 );
 
 CREATE TABLE public.payments (

@@ -7,7 +7,11 @@ namespace App\Support;
  */
 final class Patterns
 {
+    /** Driver, emergency, and other non-account numbers. Still stored as 09XXXXXXXXX. */
     public const PHONE = 'regex:/^09[0-9]{9}$/';
+
+    /** Account mobiles, stored as +639XXXXXXXXX. Normalize with Phone::canonical() first. */
+    public const ACCOUNT_PHONE = 'regex:/^\+639[0-9]{9}$/';
 
     public const LICENSE_NO = 'regex:/^[A-Z0-9][A-Z0-9-]{5,19}$/i';
 

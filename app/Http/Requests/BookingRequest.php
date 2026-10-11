@@ -68,8 +68,10 @@ class BookingRequest extends FormRequest
             'renter_document.license_address' => ['nullable', 'string', 'max:120'],
             'renter_document.emergency_phone' => ['nullable', 'string', Patterns::PHONE],
             'renter_document.license_photo' => ['nullable', 'string', Patterns::LICENSE_PHOTO],
+            'renter_document.id_photo' => ['nullable', 'string', Patterns::LICENSE_PHOTO],
             'renter_document.id_type' => ['nullable', Rule::in(BookingRenterDocument::ID_TYPES)],
             'renter_document.id_number' => ['nullable', 'string', Patterns::ID_NUMBER],
+            'renter_document.id_expiry' => ['nullable', 'date'],
         ];
     }
 
@@ -77,9 +79,30 @@ class BookingRequest extends FormRequest
     {
         return [
             fn (Validator $validator) => $this->validateTrip($validator),
+            fn (Validator $validator) => $this->validateNoOngoingTrip($validator),
             fn (Validator $validator) => $this->validateStatusChange($validator),
             fn (Validator $validator) => $this->validateRenterDocument($validator),
         ];
+    }
+
+    private function validateNoOngoingTrip(Validator $validator): void
+    {
+        if (! $this->isMethod('POST')) {
+            return;
+        }
+
+        $userId = $this->input('user_id');
+
+        if (! $userId) {
+            return;
+        }
+
+        if (Booking::where('user_id', $userId)->where('status', 'ongoing')->exists()) {
+            $validator->errors()->add(
+                'user_id',
+                'This account already has a trip in progress. Return that vehicle before booking another car.'
+            );
+        }
     }
 
     private function validateTrip(Validator $validator): void
