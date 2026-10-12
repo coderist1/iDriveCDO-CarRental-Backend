@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\Patterns;
+use App\Support\Phone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,10 +34,14 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if ($e164 = Phone::toE164((string) $request->input('phone'))) {
+            $request->merge(['phone' => $e164]);
+        }
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:40'],
             'last_name' => ['required', 'string', 'max:40'],
-            'phone' => ['required', 'string', Patterns::PHONE],
+            'phone' => ['required', 'string', Patterns::ACCOUNT_PHONE],
             'email' => ['required', 'string', 'lowercase', 'email', Patterns::EMAIL, 'max:120', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);

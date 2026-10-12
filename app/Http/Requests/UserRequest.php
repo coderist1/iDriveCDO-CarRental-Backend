@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\NormalizesAccountPhone;
 use App\Models\User;
 use App\Support\Patterns;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rules\Password;
 
 class UserRequest extends FormRequest
 {
+    use NormalizesAccountPhone;
+
     public function authorize(): bool
     {
         return true;
@@ -30,7 +33,7 @@ class UserRequest extends FormRequest
             'role' => ['sometimes', Rule::in(User::ROLES)],
             'first_name' => [$required, 'string', 'max:40'],
             'last_name' => [$required, 'string', 'max:40'],
-            'phone' => [$required, 'string', Patterns::PHONE],
+            'phone' => [$required, 'string', Patterns::ACCOUNT_PHONE],
             'address' => ['sometimes', 'nullable', 'string', 'max:120'],
             'department' => ['sometimes', 'nullable', 'string', 'max:60'],
             'license_no' => ['sometimes', 'nullable', 'string', Patterns::LICENSE_NO],

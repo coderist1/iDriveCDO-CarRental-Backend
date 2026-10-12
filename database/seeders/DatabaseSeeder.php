@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([LocationSeeder::class, AddonSeeder::class, FleetSeeder::class]);
+        $this->call([LocationSeeder::class, AddonSeeder::class, FleetSeeder::class, DemoAccountSeeder::class]);
 
         DB::transaction(function () {
             $admin = User::factory()->admin()->create([

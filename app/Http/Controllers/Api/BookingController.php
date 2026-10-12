@@ -72,6 +72,17 @@ class BookingController extends Controller
         return response()->json($booking->load([...self::DETAIL, 'messageThread']));
     }
 
+    /**
+     * Staff/admin ID check. Photos stay hidden on normal booking JSON.
+     */
+    public function idDocument(Booking $booking): JsonResponse
+    {
+        $document = $booking->renterDocument;
+        $document?->makeVisible(['license_photo', 'id_photo']);
+
+        return response()->json(['document' => $document]);
+    }
+
     public function update(BookingRequest $request, Booking $booking): JsonResponse
     {
         $data = $request->safe()->except(['addon_ids', 'renter_document']);

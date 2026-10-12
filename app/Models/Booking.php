@@ -136,6 +136,24 @@ class Booking extends Model
         return $status === $this->status || in_array($status, self::TRANSITIONS[$this->status] ?? [], true);
     }
 
+    /**
+     * True when another active booking already holds this vehicle for overlapping dates.
+     * End dates are exclusive so a same-day return and pickup can share a car.
+     */
+    public static function hasScheduleConflict(int $vehicleId, mixed $start, mixed $end, ?int $exceptId = null): bool
+    {
+        $start = Carbon::parse($start)->toDateString();
+        $end = Carbon::parse($end)->toDateString();
+
+        return static::query()
+            ->where('vehicle_id', $vehicleId)
+            ->whereIn('status', self::ACTIVE_STATUSES)
+            ->when($exceptId, fn ($q) => $q->where('booking_id', '!=', $exceptId))
+            ->where('start_date', '<', $end)
+            ->where('end_date', '>', $start)
+            ->exists();
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

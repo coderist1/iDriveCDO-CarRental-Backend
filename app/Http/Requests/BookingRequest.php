@@ -70,6 +70,8 @@ class BookingRequest extends FormRequest
             'renter_document.license_photo' => ['nullable', 'string', Patterns::LICENSE_PHOTO],
             'renter_document.id_type' => ['nullable', Rule::in(BookingRenterDocument::ID_TYPES)],
             'renter_document.id_number' => ['nullable', 'string', Patterns::ID_NUMBER],
+            'renter_document.id_expiry' => ['nullable', 'date'],
+            'renter_document.id_photo' => ['nullable', 'string', Patterns::LICENSE_PHOTO],
         ];
     }
 
@@ -101,6 +103,19 @@ class BookingRequest extends FormRequest
 
         if ($vehicle && $passengers > $vehicle->capacity) {
             $validator->errors()->add('number_of_passengers', "This vehicle seats at most {$vehicle->capacity} passengers.");
+        }
+
+        $status = (string) $this->input('status', $booking?->status ?? 'pending');
+        $holdsVehicle = in_array($status, Booking::ACTIVE_STATUSES, true);
+
+        if ($holdsVehicle && $vehicle && $vehicle->status !== 'available') {
+            $validator->errors()->add('vehicle_id', 'This vehicle is under maintenance and cannot be booked.');
+        }
+
+        $vehicleId = $this->input('vehicle_id', $booking?->vehicle_id);
+        if ($holdsVehicle && $vehicleId && $start && $end && strtotime((string) $start) && strtotime((string) $end)
+            && Booking::hasScheduleConflict((int) $vehicleId, $start, $end, $booking?->booking_id)) {
+            $validator->errors()->add('start_date', 'Those dates overlap an existing booking for this car.');
         }
     }
 

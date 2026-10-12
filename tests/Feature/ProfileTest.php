@@ -31,7 +31,7 @@ test('profile information can be updated', function () {
     $user->refresh();
 
     $this->assertSame('Test User', $user->name);
-    $this->assertSame('09181234567', $user->phone);
+    $this->assertSame('+639181234567', $user->phone);
     $this->assertSame('test@example.com', $user->email);
     $this->assertNull($user->email_verified_at);
 });

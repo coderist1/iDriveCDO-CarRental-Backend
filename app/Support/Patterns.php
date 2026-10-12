@@ -9,6 +9,9 @@ final class Patterns
 {
     public const PHONE = 'regex:/^09[0-9]{9}$/';
 
+    /** users.phone CHECK: +639XXXXXXXXX. Form requests also accept 09… and normalize first. */
+    public const ACCOUNT_PHONE = 'regex:/^\+639[0-9]{9}$/';
+
     public const LICENSE_NO = 'regex:/^[A-Z0-9][A-Z0-9-]{5,19}$/i';
 
     public const PLATE_NUMBER = 'regex:/^[A-Z0-9]{2,4}-?[0-9]{3,4}$/i';

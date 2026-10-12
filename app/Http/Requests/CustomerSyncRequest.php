@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\NormalizesAccountPhone;
 use App\Support\Patterns;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CustomerSyncRequest extends FormRequest
 {
+    use NormalizesAccountPhone;
+
     public function authorize(): bool
     {
         return true;
@@ -21,7 +24,7 @@ class CustomerSyncRequest extends FormRequest
             'email' => ['required', 'string', 'email', Patterns::EMAIL, 'max:120'],
             'first_name' => ['required', 'string', 'max:40'],
             'last_name' => ['required', 'string', 'max:40'],
-            'phone' => ['required', 'string', Patterns::PHONE],
+            'phone' => ['required', 'string', Patterns::ACCOUNT_PHONE],
             'address' => ['nullable', 'string', 'max:120'],
             'license_no' => ['nullable', 'string', Patterns::LICENSE_NO],
             'license_expiry' => ['nullable', 'date'],

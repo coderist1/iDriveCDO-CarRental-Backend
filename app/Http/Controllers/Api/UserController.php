@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerSyncRequest;
+use App\Http\Requests\PhoneAvailableRequest;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -86,6 +87,13 @@ class UserController extends Controller
         });
 
         return response()->json($user->refresh(), $user->wasRecentlyCreated ? 201 : 200);
+    }
+
+    public function phoneAvailable(PhoneAvailableRequest $request): JsonResponse
+    {
+        return response()->json([
+            'taken' => User::query()->where('phone', $request->validated('phone'))->exists(),
+        ]);
     }
 
     /**

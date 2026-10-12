@@ -25,16 +25,20 @@ class BookingRenterDocument extends Model
         'license_photo',
         'id_type',
         'id_number',
+        'id_expiry',
+        'id_photo',
     ];
 
     protected $hidden = [
         'license_photo',
+        'id_photo',
     ];
 
     protected function casts(): array
     {
         return [
             'license_expiry' => 'date:Y-m-d',
+            'id_expiry' => 'date:Y-m-d',
         ];
     }
 
