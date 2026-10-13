@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingRequest;
+use App\Http\Requests\CancelBookingRequest;
 use App\Models\Addon;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -126,6 +127,46 @@ class BookingController extends Controller
                     : $booking->renterDocument()->delete();
             }
         });
+
+        return response()->json($booking->refresh()->load(self::DETAIL));
+    }
+
+    public function cancel(CancelBookingRequest $request, Booking $booking): JsonResponse
+    {
+        $userId = (int) $request->validated('user_id');
+
+        if ($userId !== (int) $booking->user_id) {
+            return response()->json(['message' => 'You can only cancel your own booking.'], 403);
+        }
+
+        if ($booking->status === 'cancelled') {
+            return response()->json(['message' => 'This booking is already cancelled.'], 422);
+        }
+
+        if ($booking->status !== 'pending') {
+            $message = $booking->status === 'confirmed'
+                ? 'This booking is already confirmed and can no longer be cancelled.'
+                : 'This booking can no longer be cancelled.';
+
+            return response()->json(['message' => $message], 422);
+        }
+
+        $reason = (string) $request->validated('reason');
+        $note = trim((string) $request->validated('reason_note'));
+        $stored = $reason === 'Other' ? $note : $reason;
+
+        if ($stored === '') {
+            return response()->json([
+                'message' => 'Tell us why you are cancelling.',
+                'errors' => ['reason' => ['Tell us why you are cancelling.']],
+            ], 422);
+        }
+
+        $booking->fill([
+            'status' => 'cancelled',
+            'cancel_reason' => $stored,
+            'cancelled_at' => now(),
+        ])->save();
 
         return response()->json($booking->refresh()->load(self::DETAIL));
     }

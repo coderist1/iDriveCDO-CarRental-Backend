@@ -20,6 +20,7 @@ class BookingRenterDocument extends Model
         'license_name',
         'license_no',
         'license_expiry',
+        'dl_codes',
         'license_address',
         'emergency_phone',
         'license_photo',

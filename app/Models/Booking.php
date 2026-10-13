@@ -29,7 +29,7 @@ class Booking extends Model
      */
     public const TRANSITIONS = [
         'pending' => ['confirmed', 'rejected', 'cancelled'],
-        'confirmed' => ['ongoing', 'cancelled', 'return_requested'],
+        'confirmed' => ['ongoing', 'return_requested'],
         'ongoing' => ['completed', 'return_requested'],
         'return_requested' => ['completed', 'ongoing'],
         'completed' => [],
@@ -76,6 +76,8 @@ class Booking extends Model
         'payment_method',
         'notes',
         'return_notes',
+        'cancel_reason',
+        'cancelled_at',
         'date_reserve',
         'started_at',
         'started_by',
@@ -99,6 +101,7 @@ class Booking extends Model
             'started_at' => 'datetime',
             'return_requested_at' => 'datetime',
             'returned_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -134,6 +137,24 @@ class Booking extends Model
     public function canTransitionTo(string $status): bool
     {
         return $status === $this->status || in_array($status, self::TRANSITIONS[$this->status] ?? [], true);
+    }
+
+    /**
+     * The cancel and booking routes accept the numeric id, the bk_ code, or the IDR reference.
+     * A non-numeric value must not be compared with booking_id, or Postgres rejects the query.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if ($field !== null) {
+            return $this->where($field, $value)->firstOrFail();
+        }
+
+        $query = $this->newQuery();
+        if (ctype_digit((string) $value)) {
+            return $query->where($this->getRouteKeyName(), $value)->firstOrFail();
+        }
+
+        return $query->where('code', $value)->orWhere('ref', $value)->firstOrFail();
     }
 
     public function user(): BelongsTo

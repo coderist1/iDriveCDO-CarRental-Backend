@@ -57,12 +57,19 @@ AS $function$
 BEGIN
   IF NEW.status <> OLD.status AND NOT (
        (OLD.status = 'pending'          AND NEW.status IN ('confirmed','rejected','cancelled'))
-    OR (OLD.status = 'confirmed'        AND NEW.status IN ('ongoing','cancelled','return_requested'))
+    OR (OLD.status = 'confirmed'        AND NEW.status IN ('ongoing','return_requested'))
     OR (OLD.status = 'ongoing'          AND NEW.status IN ('completed','return_requested'))
     OR (OLD.status = 'return_requested' AND NEW.status IN ('completed','ongoing'))
   ) THEN
     RAISE EXCEPTION 'That status change is not allowed.';
   END IF;
+
+  IF NEW.status = 'cancelled' AND OLD.status <> 'cancelled' THEN
+    IF NEW.cancel_reason IS NULL OR btrim(NEW.cancel_reason) = '' OR NEW.cancelled_at IS NULL THEN
+      RAISE EXCEPTION 'A cancellation needs a reason and a time.';
+    END IF;
+  END IF;
+
   RETURN NEW;
 END $function$;
 
@@ -320,6 +327,8 @@ CREATE TABLE public.bookings (
   payment_method       varchar(10),
   notes                varchar(240),
   return_notes         varchar(240),
+  cancel_reason        varchar(240),
+  cancelled_at         timestamptz,
   date_reserve         timestamptz   NOT NULL DEFAULT now(),
   started_at           timestamptz,
   started_by           bigint,
@@ -390,6 +399,7 @@ CREATE TABLE public.booking_renter_documents (
   license_name    varchar(60),
   license_no      varchar(20),
   license_expiry  date,
+  dl_codes        varchar(40),
   license_address varchar(120),
   emergency_phone varchar(15),
   license_photo   text,
@@ -404,6 +414,10 @@ CREATE TABLE public.booking_renter_documents (
   CONSTRAINT ck_renter_docs_id_type CHECK (id_type IS NULL OR id_type IN ('National ID', 'Passport', 'UMID', 'Postal ID', 'Company ID', 'Student ID')),
   CONSTRAINT ck_renter_docs_kind CHECK (
     (id_type IS NOT NULL AND id_number IS NOT NULL)
+    OR (
+      dl_codes IS NOT NULL AND btrim(dl_codes) <> ''
+      AND license_no IS NOT NULL AND license_expiry IS NOT NULL
+    )
     OR (license_name IS NOT NULL AND license_no IS NOT NULL AND license_expiry IS NOT NULL
         AND license_address IS NOT NULL AND emergency_phone IS NOT NULL AND license_photo IS NOT NULL)
   ),

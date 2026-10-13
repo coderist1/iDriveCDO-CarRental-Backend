@@ -45,6 +45,7 @@ Route::apiResource('locations', LocationController::class);
 Route::apiResource('addons', AddonController::class);
 
 Route::get('bookings/{booking}/id-document', [BookingController::class, 'idDocument']);
+Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel']);
 Route::apiResource('bookings', BookingController::class);
 Route::apiResource('payments', PaymentController::class);
 Route::apiResource('ratings', RatingController::class);

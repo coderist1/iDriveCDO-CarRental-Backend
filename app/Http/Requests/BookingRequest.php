@@ -63,8 +63,9 @@ class BookingRequest extends FormRequest
 
             'renter_document' => ['sometimes', 'nullable', 'array'],
             'renter_document.license_name' => ['nullable', 'string', 'max:60'],
+            'renter_document.dl_codes' => ['nullable', 'string', 'max:40'],
             'renter_document.license_no' => ['nullable', 'string', 'max:20', Patterns::LICENSE_NO],
-            'renter_document.license_expiry' => ['nullable', 'date'],
+            'renter_document.license_expiry' => ['nullable', 'date', 'after_or_equal:today'],
             'renter_document.license_address' => ['nullable', 'string', 'max:120'],
             'renter_document.emergency_phone' => ['nullable', 'string', Patterns::PHONE],
             'renter_document.license_photo' => ['nullable', 'string', Patterns::LICENSE_PHOTO],
@@ -131,6 +132,12 @@ class BookingRequest extends FormRequest
     {
         $booking = $this->route('booking');
 
+        if ($booking instanceof Booking && $this->input('status') === 'cancelled') {
+            $validator->errors()->add('status', 'Cancel a booking with a reason. Changing the status alone is not enough.');
+
+            return;
+        }
+
         if ($booking instanceof Booking && $this->filled('status') && ! $booking->canTransitionTo($this->input('status'))) {
             $validator->errors()->add('status', "A {$booking->status} booking cannot be changed to {$this->input('status')}.");
         }
@@ -145,13 +152,30 @@ class BookingRequest extends FormRequest
         }
 
         $hasId = filled($document['id_type'] ?? null) && filled($document['id_number'] ?? null);
-        $licenseFields = ['license_name', 'license_no', 'license_expiry', 'license_address', 'emergency_phone', 'license_photo'];
+        $licenseFields = ['dl_codes', 'license_no', 'license_expiry'];
         $hasLicense = collect($licenseFields)->every(fn ($field) => filled($document[$field] ?? null));
+        $anyLicense = collect($licenseFields)->contains(fn ($field) => filled($document[$field] ?? null));
+
+        if ($anyLicense && ! $hasLicense) {
+            $validator->errors()->add(
+                'renter_document',
+                'DL codes, license number, and expiration date are all required.'
+            );
+        }
+
+        $expiry = $document['license_expiry'] ?? null;
+        $end = $this->input('end_date');
+        if ($hasLicense && $expiry && $end && strtotime((string) $expiry) && strtotime((string) $end) && $expiry < $end) {
+            $validator->errors()->add(
+                'renter_document.license_expiry',
+                'This license expires before the vehicle is returned.'
+            );
+        }
 
         if (! $hasId && ! $hasLicense) {
             $validator->errors()->add(
                 'renter_document',
-                'Provide either an ID type and number, or all driver\'s license details (name, number, expiry, address, emergency phone and photo).'
+                'Provide either an ID type and number, or the DL codes, license number, and expiration date.'
             );
         }
     }
