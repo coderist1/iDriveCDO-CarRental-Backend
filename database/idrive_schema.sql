@@ -325,7 +325,7 @@ CREATE TABLE public.bookings (
   status               varchar(20)   NOT NULL DEFAULT 'pending',
   payment_status       varchar(10)   NOT NULL DEFAULT 'unpaid',
   payment_method       varchar(10),
-  notes                varchar(240),
+  notes                varchar(1000),
   return_notes         varchar(240),
   cancel_reason        varchar(240),
   cancelled_at         timestamptz,
@@ -440,6 +440,7 @@ CREATE TABLE public.payments (
   payment_status   varchar(10)   NOT NULL DEFAULT 'paid',
   payment_date     timestamptz   NOT NULL DEFAULT now(),
   recorded_by      bigint,
+  receipt          text,
   created_at       timestamptz   NOT NULL DEFAULT now(),
   CONSTRAINT payments_pkey PRIMARY KEY (payment_id),
   CONSTRAINT uq_payments_code UNIQUE (code),
@@ -449,11 +450,12 @@ CREATE TABLE public.payments (
   CONSTRAINT ck_payments_amount CHECK (amount > 0),
   CONSTRAINT ck_payments_brand CHECK (
     (payment_method = 'cash' AND brand = 'Cash')
-    OR (payment_method = 'cashless' AND brand IN ('GCash', 'Maya', 'GrabPay'))
+    OR (payment_method = 'cashless' AND brand IN ('GCash', 'Maya', 'GrabPay', 'Instapay'))
     OR payment_method = 'card'
   ),
   CONSTRAINT ck_payments_method CHECK (payment_method IN ('cash', 'cashless', 'card')),
-  CONSTRAINT ck_payments_status CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded'))
+  CONSTRAINT ck_payments_status CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
+  CONSTRAINT ck_payments_receipt CHECK (receipt IS NULL OR receipt ~* '^data:image/(jpeg|jpg|png|webp);base64,')
 );
 CREATE INDEX ix_payments_booking ON public.payments (booking_id);
 CREATE INDEX ix_payments_date ON public.payments (payment_date);

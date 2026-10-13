@@ -15,7 +15,7 @@ class Payment extends Model
 
     public const METHODS = ['cash', 'cashless', 'card'];
 
-    public const CASHLESS_BRANDS = ['GCash', 'Maya', 'GrabPay'];
+    public const CASHLESS_BRANDS = ['GCash', 'Maya', 'GrabPay', 'Instapay'];
 
     public const STATUSES = ['pending', 'paid', 'failed', 'refunded'];
 
@@ -35,6 +35,7 @@ class Payment extends Model
         'payment_status',
         'payment_date',
         'recorded_by',
+        'receipt',
     ];
 
     protected function casts(): array

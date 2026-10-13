@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Payment;
+use App\Support\Patterns;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -41,6 +42,7 @@ class PaymentRequest extends FormRequest
             'payment_status' => ['sometimes', Rule::in(Payment::STATUSES)],
             'payment_date' => ['sometimes', 'date'],
             'recorded_by' => ['sometimes', 'nullable', Rule::exists('users', 'user_id')],
+            'receipt' => ['sometimes', 'nullable', 'string', 'max:750000', Patterns::LICENSE_PHOTO],
         ];
     }
 

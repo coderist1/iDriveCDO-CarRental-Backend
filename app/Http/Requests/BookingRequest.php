@@ -52,7 +52,7 @@ class BookingRequest extends FormRequest
             'status' => ['sometimes', Rule::in(Booking::STATUSES)],
             'payment_status' => ['sometimes', Rule::in(Booking::PAYMENT_STATUSES)],
             'payment_method' => ['sometimes', 'nullable', 'required_if:payment_status,paid', Rule::in(Booking::PAYMENT_METHODS)],
-            'notes' => ['sometimes', 'nullable', 'string', 'max:240'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'return_notes' => ['sometimes', 'nullable', 'string', 'max:240'],
             'started_by' => $staffUser,
             'return_requested_by' => $staffUser,
