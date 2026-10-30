@@ -20,9 +20,11 @@ class BookingNoticeMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $subject = $this->kind === 'confirmed'
-            ? 'Booking Confirmation '.$this->booking->ref
-            : 'Reservation Confirmation '.$this->booking->ref;
+        $subject = match ($this->kind) {
+            'confirmed' => 'Booking Confirmation '.$this->booking->ref,
+            'return_requested' => 'Return requested '.$this->booking->ref,
+            default => 'Reservation Confirmation '.$this->booking->ref,
+        };
 
         return new Envelope(subject: $subject);
     }

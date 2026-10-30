@@ -9,6 +9,7 @@ use App\Models\Addon;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\BookingNotifier;
+use App\Services\DeskInbox;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -128,10 +129,20 @@ class BookingController extends Controller
 
             $booking->extras = $booking->addons()->get()->sum(fn (Addon $addon) => $addon->pivot->daily_rate * $days);
             $becameConfirmed = isset($data['status']) && $data['status'] === 'confirmed' && $booking->isDirty('status');
+            $becameReturn = isset($data['status']) && $data['status'] === 'return_requested' && $booking->isDirty('status');
             $booking->save();
 
             if ($becameConfirmed) {
                 app(BookingNotifier::class)->confirmation($booking->fresh());
+            }
+
+            if ($becameReturn) {
+                $fresh = $booking->fresh();
+                app(DeskInbox::class)->returnRequested(
+                    $fresh,
+                    $data['return_notes'] ?? $fresh->return_notes
+                );
+                app(BookingNotifier::class)->returnRequested($fresh);
             }
 
             if ($request->has('renter_document')) {
@@ -142,7 +153,7 @@ class BookingController extends Controller
             }
         });
 
-        return response()->json($booking->refresh()->load(self::DETAIL));
+        return response()->json($booking->refresh()->load([...self::DETAIL, 'messageThread.messages']));
     }
 
     public function cancel(CancelBookingRequest $request, Booking $booking): JsonResponse

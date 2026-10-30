@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\FuelRecord;
 use App\Models\Maintenance;
+use App\Models\MessageThread;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -31,6 +32,8 @@ class SyncController extends Controller
             'fuel_records' => FuelRecord::with('vehicle')->latest('recorded_at')->get(),
             'maintenances' => Maintenance::with('vehicle')->orderByDesc('scheduled_date')->get(),
             'vehicle_registrations' => VehicleRegistration::with('vehicle')->orderBy('next_reg_renewal')->get(),
+            /* Desk inbox (returns, booking notices, contact). */
+            'message_threads' => MessageThread::with('messages')->latest('updated_at')->get(),
         ]);
     }
 }

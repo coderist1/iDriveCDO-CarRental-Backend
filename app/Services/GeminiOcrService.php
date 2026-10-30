@@ -122,6 +122,9 @@ class GeminiOcrService
             'birthDate' => $this->date($fields['birthDate'] ?? $fields['birth_date'] ?? $fields['birthdate'] ?? null),
             'address' => $this->clean($fields['address'] ?? null),
             'expiryDate' => $this->date($fields['expiryDate'] ?? $fields['expiry_date'] ?? $fields['expiry'] ?? null),
+            'issueDate' => $this->date($fields['issueDate'] ?? $fields['issue_date'] ?? null),
+            'idType' => $this->clean($fields['idType'] ?? $fields['id_type'] ?? null),
+            'licenseClass' => $this->clean($fields['licenseClass'] ?? $fields['dl_codes'] ?? $fields['dlCodes'] ?? null),
         ];
 
         if (! $mapped['fullName'] && ! $mapped['idNumber'] && ! $mapped['expiryDate'] && ! $mapped['birthDate'] && ! $mapped['address']) {
@@ -135,7 +138,9 @@ class GeminiOcrService
     {
         return <<<'TXT'
 Read this Philippine government ID or driver's license. Return JSON only with keys:
-fullName, idNumber, birthDate, address, expiryDate.
+fullName, idNumber, birthDate, address, expiryDate, issueDate, idType, licenseClass.
+idType must be one of: National ID, Passport, UMID, Postal ID, Driver's License, or null.
+licenseClass is the DL codes on a driver's license (like B or B1), otherwise null.
 Use ISO dates YYYY-MM-DD. If a field is missing or unreadable, use null.
 Do not guess values that are not printed on the card.
 TXT;
@@ -178,10 +183,17 @@ TXT;
     private function date(mixed $value): ?string
     {
         $text = $this->clean($value);
-        if (! $text || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $text)) {
+        if (! $text) {
             return null;
         }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $text)) {
+            return $text;
+        }
+        $stamp = strtotime($text);
+        if ($stamp) {
+            return date('Y-m-d', $stamp);
+        }
 
-        return $text;
+        return null;
     }
 }
