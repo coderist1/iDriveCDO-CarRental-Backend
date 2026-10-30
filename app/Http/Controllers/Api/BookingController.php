@@ -8,6 +8,7 @@ use App\Http\Requests\CancelBookingRequest;
 use App\Models\Addon;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use App\Services\BookingNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -65,19 +66,27 @@ class BookingController extends Controller
             return $booking;
         });
 
-        return response()->json($booking->refresh()->load(self::DETAIL), 201);
+        $fresh = $booking->refresh()->load(self::DETAIL);
+        app(BookingNotifier::class)->reservation($fresh);
+
+        return response()->json($fresh, 201);
     }
 
     /** The ID images and the details printed on them, for the desk to compare. */
-    public function idDocument(Booking $booking): JsonResponse
+    public function idDocument(Request $request, Booking $booking): JsonResponse
     {
+        $role = (string) $request->query('viewer_role', '');
+        if (! in_array($role, ['admin', 'staff'], true)) {
+            return response()->json(['message' => 'Only admin or staff can view renter IDs.'], 403);
+        }
+
         $doc = $booking->renterDocument;
         if (! $doc) {
             return response()->json(['document' => null]);
         }
 
         return response()->json([
-            'document' => $doc->makeVisible(['license_photo', 'id_photo']),
+            'document' => $doc->makeVisible(['license_photo', 'id_photo', 'parent_id_photo']),
         ]);
     }
 
@@ -118,7 +127,12 @@ class BookingController extends Controller
             }
 
             $booking->extras = $booking->addons()->get()->sum(fn (Addon $addon) => $addon->pivot->daily_rate * $days);
+            $becameConfirmed = isset($data['status']) && $data['status'] === 'confirmed' && $booking->isDirty('status');
             $booking->save();
+
+            if ($becameConfirmed) {
+                app(BookingNotifier::class)->confirmation($booking->fresh());
+            }
 
             if ($request->has('renter_document')) {
                 $document = $request->validated('renter_document');

@@ -23,6 +23,11 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3-flash-preview'),
+    ],
+
     'brevo' => [
         'key' => env('BREVO_API_KEY'),
         'verification_template_id' => env('BREVO_VERIFICATION_TEMPLATE_ID'),

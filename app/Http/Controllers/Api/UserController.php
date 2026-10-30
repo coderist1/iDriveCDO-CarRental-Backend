@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -80,6 +81,39 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted.']);
+    }
+
+    public function flag(Request $request, User $user, \App\Services\DeskInbox $inbox): JsonResponse
+    {
+        if ($user->role !== 'customer') {
+            return response()->json(['message' => 'Only a renter account can be labeled.'], 422);
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:8', 'max:400'],
+            'labeled_by' => ['required', Rule::exists('users', 'user_id')],
+        ]);
+
+        $staff = User::findOrFail($data['labeled_by']);
+        if (! in_array($staff->role, ['admin', 'staff'], true)) {
+            return response()->json(['message' => 'Only admin or staff can label a renter.'], 403);
+        }
+
+        $user->update([
+            'is_bad_renter' => true,
+            'bad_renter_reason' => $data['reason'],
+            'bad_renter_labeled_by' => $staff->user_id,
+            'bad_renter_labeled_at' => now(),
+        ]);
+
+        $inbox->notifyCustomer(
+            $user,
+            'Account labeled Bad Renter',
+            'Your account was labeled Bad Renter. Reason: '.$data['reason'].' Staff who labeled you: '.$staff->name.'.',
+            $staff->user_id
+        );
+
+        return response()->json($user->refresh()->load('labeledBy'));
     }
 
     /**

@@ -23,3 +23,9 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .env.*.bak
+
+# ML service (Python)
+/ml/.venv/
+/ml/venv/
+/ml/**/__pycache__/
+/ml/**/*.pyc

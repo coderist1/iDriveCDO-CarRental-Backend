@@ -73,6 +73,12 @@ class BookingRequest extends FormRequest
             'renter_document.id_type' => ['nullable', Rule::in(BookingRenterDocument::ID_TYPES)],
             'renter_document.id_number' => ['nullable', 'string', Patterns::ID_NUMBER],
             'renter_document.id_expiry' => ['nullable', 'date'],
+            'renter_document.birthdate' => ['nullable', 'date'],
+            'renter_document.parent_name' => ['nullable', 'string', 'max:80'],
+            'renter_document.parent_phone' => ['nullable', 'string', Patterns::PHONE],
+            'renter_document.parent_id_photo' => ['nullable', 'string', Patterns::LICENSE_PHOTO],
+            'renter_document.parent_consent_at' => ['nullable', 'date'],
+            'renter_document.privacy_accepted_at' => ['nullable', 'date'],
         ];
     }
 
@@ -80,9 +86,11 @@ class BookingRequest extends FormRequest
     {
         return [
             fn (Validator $validator) => $this->validateTrip($validator),
+            fn (Validator $validator) => $this->validateNoOverlap($validator),
             fn (Validator $validator) => $this->validateNoOngoingTrip($validator),
             fn (Validator $validator) => $this->validateStatusChange($validator),
             fn (Validator $validator) => $this->validateRenterDocument($validator),
+            fn (Validator $validator) => $this->validateIdsWhenCarInUse($validator),
         ];
     }
 
@@ -143,24 +151,142 @@ class BookingRequest extends FormRequest
         }
     }
 
+    private function validateNoOverlap(Validator $validator): void
+    {
+        $booking = $this->route('booking');
+        $vehicleId = $this->input('vehicle_id', $booking?->vehicle_id);
+        $start = $this->input('start_date', $booking?->start_date);
+        $end = $this->input('end_date', $booking?->end_date);
+        if (! $vehicleId || ! $start || ! $end) {
+            return;
+        }
+
+        $query = Booking::query()
+            ->where('vehicle_id', $vehicleId)
+            ->whereIn('status', Booking::ACTIVE_STATUSES)
+            ->where('start_date', '<', $end)
+            ->where('end_date', '>', $start);
+        if ($booking instanceof Booking) {
+            $query->where('booking_id', '!=', $booking->booking_id);
+        }
+        if ($query->exists()) {
+            $validator->errors()->add(
+                'vehicle_id',
+                'This car is already reserved for some of those dates. Choose other dates or another car.'
+            );
+        }
+    }
+
+    private function validateIdsWhenCarInUse(Validator $validator): void
+    {
+        $booking = $this->route('booking');
+        $confirming = $this->input('status') === 'confirmed' || $this->isMethod('POST');
+        if (! $confirming) {
+            return;
+        }
+
+        $vehicleId = $this->input('vehicle_id', $booking?->vehicle_id);
+        if (! $vehicleId) {
+            return;
+        }
+
+        $current = Booking::query()
+            ->with('renterDocument')
+            ->where('vehicle_id', $vehicleId)
+            ->where('status', 'ongoing')
+            ->when($booking instanceof Booking, fn ($q) => $q->where('booking_id', '!=', $booking->booking_id))
+            ->first();
+        if (! $current) {
+            return;
+        }
+
+        if (! $this->hasValidId($current->renterDocument)) {
+            $validator->errors()->add(
+                'vehicle_id',
+                'This car is in use and the current renter has no valid ID on file. Staff must collect that ID before another booking is confirmed.'
+            );
+        }
+
+        $incoming = $this->input('renter_document');
+        $existing = $booking instanceof Booking ? $booking->renterDocument : null;
+        $newDoc = is_array($incoming) ? $incoming : $existing;
+        if (! $this->hasValidId($newDoc)) {
+            $validator->errors()->add(
+                'renter_document',
+                'This car is currently in use. Upload a valid ID for the new renter before the booking is confirmed.'
+            );
+        }
+    }
+
+    private function hasValidId(mixed $document): bool
+    {
+        if (! $document) {
+            return false;
+        }
+        if (is_array($document)) {
+            $photo = filled($document['id_photo'] ?? null) || filled($document['license_photo'] ?? null);
+            $number = filled($document['id_number'] ?? null) || filled($document['license_no'] ?? null);
+
+            return $photo && $number;
+        }
+
+        $photo = filled($document->getAttribute('id_photo')) || filled($document->getAttribute('license_photo'));
+        $number = filled($document->id_number) || filled($document->license_no);
+
+        return $photo && $number;
+    }
+
     private function validateRenterDocument(Validator $validator): void
     {
         $document = $this->input('renter_document');
 
         if (! is_array($document) || $document === []) {
+            if ($this->isMethod('POST')) {
+                $validator->errors()->add('renter_document', 'Upload the required ID for this booking.');
+            }
+
             return;
         }
 
-        $hasId = filled($document['id_type'] ?? null) && filled($document['id_number'] ?? null);
+        if (! filled($document['privacy_accepted_at'] ?? null)) {
+            $validator->errors()->add(
+                'renter_document.privacy_accepted_at',
+                'Accept the Data Privacy notice before we store your ID.'
+            );
+        }
+
+        $mode = $this->input('drive_mode', $this->route('booking')?->drive_mode ?: 'self');
+        $hasId = filled($document['id_type'] ?? null) && filled($document['id_number'] ?? null) && filled($document['id_photo'] ?? null);
         $licenseFields = ['dl_codes', 'license_no', 'license_expiry'];
         $hasLicense = collect($licenseFields)->every(fn ($field) => filled($document[$field] ?? null));
         $anyLicense = collect($licenseFields)->contains(fn ($field) => filled($document[$field] ?? null));
 
-        if ($anyLicense && ! $hasLicense) {
-            $validator->errors()->add(
-                'renter_document',
-                'DL codes, license number, and expiration date are all required.'
-            );
+        if ($mode === 'self') {
+            if (! $hasLicense || ! filled($document['license_photo'] ?? null)) {
+                $validator->errors()->add(
+                    'renter_document',
+                    'Self-drive requires a driver’s license photo plus the DL codes, license number, and expiration date.'
+                );
+            }
+            if (! $hasId) {
+                $validator->errors()->add(
+                    'renter_document.id_type',
+                    'Self-drive also requires one other valid ID (type, number, and photo).'
+                );
+            }
+        } else {
+            if ($anyLicense && ! $hasLicense) {
+                $validator->errors()->add(
+                    'renter_document',
+                    'DL codes, license number, and expiration date are all required.'
+                );
+            }
+            if (! $hasId) {
+                $validator->errors()->add(
+                    'renter_document',
+                    'With a chauffeur, upload a valid ID type, number, and photo. A driver’s license is not required.'
+                );
+            }
         }
 
         $expiry = $document['license_expiry'] ?? null;
@@ -172,11 +298,21 @@ class BookingRequest extends FormRequest
             );
         }
 
-        if (! $hasId && ! $hasLicense) {
-            $validator->errors()->add(
-                'renter_document',
-                'Provide either an ID type and number, or the DL codes, license number, and expiration date.'
-            );
+        $birth = $document['birthdate'] ?? null;
+        if ($birth && strtotime((string) $birth)) {
+            $age = Carbon::parse($birth)->age;
+            if ($age <= 17) {
+                $parentOk = filled($document['parent_name'] ?? null)
+                    && filled($document['parent_phone'] ?? null)
+                    && filled($document['parent_id_photo'] ?? null)
+                    && filled($document['parent_consent_at'] ?? null);
+                if (! $parentOk) {
+                    $validator->errors()->add(
+                        'renter_document.parent_name',
+                        'Renters aged 17 or below need parent or guardian name, mobile number, a valid ID photo, and consent.'
+                    );
+                }
+            }
         }
     }
 }

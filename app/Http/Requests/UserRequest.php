@@ -67,6 +67,12 @@ class UserRequest extends FormRequest
             'status' => ['sometimes', Rule::in(User::STATUSES)],
             'age_confirmed_at' => ['sometimes', 'nullable', 'date'],
             'terms_accepted_at' => ['sometimes', 'nullable', 'date'],
+            'birthdate' => ['sometimes', 'nullable', 'date'],
+            'privacy_accepted_at' => ['sometimes', 'nullable', 'date'],
+            'is_bad_renter' => ['sometimes', 'boolean'],
+            'bad_renter_reason' => ['sometimes', 'nullable', 'string', 'max:400'],
+            'bad_renter_labeled_by' => ['sometimes', 'nullable', Rule::exists('users', 'user_id')],
+            'bad_renter_labeled_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }

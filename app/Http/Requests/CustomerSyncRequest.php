@@ -56,6 +56,8 @@ class CustomerSyncRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:120'],
             'license_no' => ['nullable', 'string', Patterns::LICENSE_NO],
             'license_expiry' => ['nullable', 'date'],
+            'birthdate' => ['nullable', 'date'],
+            'privacy_accepted_at' => ['nullable', 'date'],
         ];
     }
 }

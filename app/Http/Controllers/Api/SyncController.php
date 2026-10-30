@@ -25,7 +25,8 @@ class SyncController extends Controller
             'vehicles' => Vehicle::with('features')->latest()->get(),
             'users' => User::query()->latest()->get(),
             'drivers' => Driver::with('user')->latest()->get(),
-            'bookings' => Booking::with(['user', 'vehicle', 'driver', 'pickupLocation', 'dropoffLocation'])->latest()->get(),
+            /* renterDocument photos stay $hidden; typed ID fields travel with sync for the desk. */
+            'bookings' => Booking::with(['user', 'vehicle', 'driver', 'pickupLocation', 'dropoffLocation', 'renterDocument'])->latest()->get(),
             'payments' => Payment::with('booking')->latest('payment_date')->get(),
             'fuel_records' => FuelRecord::with('vehicle')->latest('recorded_at')->get(),
             'maintenances' => Maintenance::with('vehicle')->orderByDesc('scheduled_date')->get(),

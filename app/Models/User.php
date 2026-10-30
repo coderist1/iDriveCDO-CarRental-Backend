@@ -53,6 +53,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'terms_accepted_at',
         'password_changed_at',
         'google_id',
+        'birthdate',
+        'privacy_accepted_at',
+        'is_bad_renter',
+        'bad_renter_reason',
+        'bad_renter_labeled_by',
+        'bad_renter_labeled_at',
     ];
 
     /**
@@ -86,6 +92,10 @@ class User extends Authenticatable implements MustVerifyEmail
             'age_confirmed_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'password_changed_at' => 'datetime',
+            'birthdate' => 'date:Y-m-d',
+            'privacy_accepted_at' => 'datetime',
+            'is_bad_renter' => 'boolean',
+            'bad_renter_labeled_at' => 'datetime',
         ];
     }
 
@@ -148,5 +158,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class, 'user_id');
+    }
+
+    public function labeledBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'bad_renter_labeled_by');
+    }
+
+    public function isMinor(): bool
+    {
+        return $this->birthdate && $this->birthdate->age <= 17;
     }
 }

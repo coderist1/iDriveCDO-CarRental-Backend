@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AddonController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\DataRequestController;
+use App\Http\Controllers\Api\OcrController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\FuelRecordController;
 use App\Http\Controllers\Api\GoogleAuthController;
@@ -29,9 +31,12 @@ Route::post('auth/google', [GoogleAuthController::class, 'signIn'])->middleware(
 Route::post('auth/password-code', [PasswordResetCodeController::class, 'send'])->middleware('throttle:5,1');
 Route::post('auth/password-code/verify', [PasswordResetCodeController::class, 'verify'])->middleware('throttle:10,1');
 
+Route::post('ocr/id', [OcrController::class, 'read'])->middleware('throttle:20,1');
 Route::post('users/sync', [UserController::class, 'sync']);
 Route::post('users/phone-available', [UserController::class, 'phoneAvailable'])->middleware('throttle:30,1');
+Route::post('users/{user}/flag', [UserController::class, 'flag'])->middleware('throttle:20,1');
 Route::apiResource('users', UserController::class);
+Route::apiResource('data-requests', DataRequestController::class)->only(['index', 'store', 'update']);
 
 Route::apiResource('vehicles', VehicleController::class);
 Route::apiResource('vehicle-registrations', VehicleRegistrationController::class);

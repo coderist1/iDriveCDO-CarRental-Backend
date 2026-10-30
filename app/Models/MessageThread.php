@@ -13,7 +13,7 @@ class MessageThread extends Model
 
     public const CODE_PREFIX = 'thr';
 
-    public const KINDS = ['booking', 'contact', 'return'];
+    public const KINDS = ['booking', 'contact', 'return', 'notice'];
 
     public const STATUSES = ['open', 'closed'];
 
