@@ -87,31 +87,56 @@ class BookingRequest extends FormRequest
         return [
             fn (Validator $validator) => $this->validateTrip($validator),
             fn (Validator $validator) => $this->validateNoOverlap($validator),
-            fn (Validator $validator) => $this->validateNoOngoingTrip($validator),
+            fn (Validator $validator) => $this->validateOneCarAtATime($validator),
             fn (Validator $validator) => $this->validateStatusChange($validator),
             fn (Validator $validator) => $this->validateRenterDocument($validator),
             fn (Validator $validator) => $this->validateIdsWhenCarInUse($validator),
         ];
     }
 
-    private function validateNoOngoingTrip(Validator $validator): void
+    private function validateOneCarAtATime(Validator $validator): void
     {
-        if (! $this->isMethod('POST')) {
-            return;
-        }
-
-        $userId = $this->input('user_id');
+        $booking = $this->route('booking');
+        $userId = $this->input('user_id', $booking?->user_id);
 
         if (! $userId) {
             return;
         }
 
-        if (Booking::where('user_id', $userId)->where('status', 'ongoing')->exists()) {
-            $validator->errors()->add(
-                'user_id',
-                'This account already has a trip in progress. Return that vehicle before booking another car.'
-            );
+        $exceptId = $booking instanceof Booking ? $booking->booking_id : null;
+
+        if ($this->isMethod('POST')) {
+            $this->addErrorIfUserHasOtherActiveBooking($validator, (int) $userId, null);
+
+            return;
         }
+
+        if ($booking instanceof Booking && $this->filled('status')) {
+            $next = $this->input('status');
+            if (in_array($next, ['confirmed', 'ongoing'], true)) {
+                $this->addErrorIfUserHasOtherActiveBooking($validator, (int) $userId, $exceptId);
+            }
+        }
+    }
+
+    private function addErrorIfUserHasOtherActiveBooking(Validator $validator, int $userId, ?int $exceptBookingId): void
+    {
+        $query = Booking::query()
+            ->where('user_id', $userId)
+            ->whereIn('status', Booking::ACTIVE_STATUSES);
+
+        if ($exceptBookingId !== null) {
+            $query->where('booking_id', '!=', $exceptBookingId);
+        }
+
+        if (! $query->exists()) {
+            return;
+        }
+
+        $validator->errors()->add(
+            'user_id',
+            'This renter already has an active booking. One car at a time — finish, pay, or cancel it before starting another.'
+        );
     }
 
     private function validateTrip(Validator $validator): void
