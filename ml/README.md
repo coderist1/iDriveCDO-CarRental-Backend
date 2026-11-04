@@ -41,3 +41,21 @@ Artifacts are written to `models/`.
 ## Docker
 
 Build context is this `ml/` folder. From the frontend repo compose file, set `IDRIVE_ML_DIR` to this path if needed.
+
+```bat
+cd ml
+docker build -t idrive-ml .
+docker run --rm -p 8001:8001 idrive-ml
+```
+
+## Deploy (Vercel Container)
+
+From this `ml/` folder (separate Vercel project from the Laravel API):
+
+```bat
+cd ml
+npx vercel link --yes --project idrive-cdo-ml
+npx vercel --prod --yes
+```
+
+After deploy, point the frontend ML client at the production URL (for example `https://idrive-cdo-ml.vercel.app`). Laravel stays on its own project (`idrive-cdo-api`).

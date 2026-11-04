@@ -29,3 +29,5 @@ Thumbs.db
 /ml/venv/
 /ml/**/__pycache__/
 /ml/**/*.pyc
+
+.vercel
